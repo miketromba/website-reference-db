@@ -1,3 +1,4 @@
+import { GET as screenshotHandler } from '@miketromba/screenshot-service/vercel'
 import { supabase } from '@/server/lib/supabase'
 
 const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000
@@ -48,9 +49,6 @@ export async function GET(
 
 		// Screenshot is stale or missing — capture in-process using
 		// @miketromba/screenshot-service (avoids self-referential HTTP call)
-		const { GET: screenshotHandler } = await import(
-			'@miketromba/screenshot-service/vercel'
-		)
 		const fakeRequest = new Request(
 			`https://localhost/api/screenshot?url=${encodeURIComponent(website.url)}&width=1440&height=900&type=png`
 		)
