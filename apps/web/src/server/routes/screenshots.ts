@@ -4,11 +4,24 @@ import { supabase } from '../lib/supabase'
 const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000
 const CACHE_HEADER = 'public, max-age=1209600, immutable'
 
+/**
+ * Resolve the base URL for the screenshot service.
+ * In production, SCREENSHOT_SERVICE_URL points to the app's own origin.
+ * Locally we fall back to localhost.
+ */
+function getScreenshotBaseUrl(request: Request): string {
+	const env = process.env.SCREENSHOT_SERVICE_URL
+	if (env && !env.startsWith('<')) return env
+
+	// Derive from the incoming request origin
+	const url = new URL(request.url)
+	return url.origin
+}
+
 export const screenshotsRoutes = new Elysia().get(
 	'/screenshots/:websiteId',
-	async ({ params, set }) => {
+	async ({ params, set, request }) => {
 		const { websiteId } = params
-		const screenshotServiceUrl = process.env.SCREENSHOT_SERVICE_URL
 
 		// Look up website
 		const { data: website, error: fetchError } = await supabase
@@ -44,25 +57,26 @@ export const screenshotsRoutes = new Elysia().get(
 			}
 		}
 
-		// Screenshot is stale or missing — capture a new one
-		if (!screenshotServiceUrl || screenshotServiceUrl.startsWith('<')) {
-			set.status = 501
-			return { error: 'Screenshot service not configured' }
-		}
-
-		const screenshotUrl = `${screenshotServiceUrl}/screenshot?url=${encodeURIComponent(website.url)}&width=1440&height=900&type=png`
+		// Screenshot is stale or missing — capture a new one via the
+		// co-located /api/screenshot endpoint (uses @miketromba/screenshot-service)
+		const baseUrl = getScreenshotBaseUrl(request)
+		const screenshotUrl = `${baseUrl}/api/screenshot?url=${encodeURIComponent(website.url)}&width=1440&height=900&type=png`
 
 		let screenshotResponse: Response
 		try {
 			screenshotResponse = await fetch(screenshotUrl)
 		} catch {
-			set.status = 502
-			return { error: 'Failed to reach screenshot service' }
+			set.status = 503
+			return {
+				error: 'Screenshot service unavailable (requires Vercel serverless environment)'
+			}
 		}
 
 		if (!screenshotResponse.ok) {
-			set.status = 502
-			return { error: 'Screenshot service returned an error' }
+			set.status = 503
+			return {
+				error: 'Screenshot service returned an error — may not be available in this environment'
+			}
 		}
 
 		const imageBuffer = await screenshotResponse.arrayBuffer()
