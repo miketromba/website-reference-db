@@ -6,4 +6,4 @@ dist
 .turbo
 *.tsbuildinfo
 .vercel
-screenshots
+/screenshots
