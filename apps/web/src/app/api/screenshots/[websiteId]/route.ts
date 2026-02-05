@@ -7,44 +7,47 @@ export async function GET(
 	_request: Request,
 	{ params }: { params: Promise<{ websiteId: string }> }
 ) {
-	const { websiteId } = await params
-
-	// Look up website
-	const { data: website, error: fetchError } = await supabase
-		.from('websites')
-		.select('id, url, screenshot_captured_at')
-		.eq('id', websiteId)
-		.single()
-
-	if (fetchError || !website) {
-		return Response.json({ error: 'Website not found' }, { status: 404 })
-	}
-
-	const fileName = `${websiteId}.png`
-	const isFresh =
-		website.screenshot_captured_at &&
-		Date.now() - new Date(website.screenshot_captured_at).getTime() <
-			TWO_WEEKS_MS
-
-	// Try serving from storage if fresh
-	if (isFresh) {
-		const { data: fileData } = await supabase.storage
-			.from('screenshots')
-			.download(fileName)
-
-		if (fileData) {
-			return new Response(fileData, {
-				headers: {
-					'Content-Type': 'image/png',
-					'Cache-Control': CACHE_HEADER
-				}
-			})
-		}
-	}
-
-	// Screenshot is stale or missing — capture in-process using
-	// @miketromba/screenshot-service (avoids self-referential HTTP call)
 	try {
+		const { websiteId } = await params
+
+		// Look up website
+		const { data: website, error: fetchError } = await supabase
+			.from('websites')
+			.select('id, url, screenshot_captured_at')
+			.eq('id', websiteId)
+			.single()
+
+		if (fetchError || !website) {
+			return Response.json(
+				{ error: 'Website not found' },
+				{ status: 404 }
+			)
+		}
+
+		const fileName = `${websiteId}.png`
+		const isFresh =
+			website.screenshot_captured_at &&
+			Date.now() - new Date(website.screenshot_captured_at).getTime() <
+				TWO_WEEKS_MS
+
+		// Try serving from storage if fresh
+		if (isFresh) {
+			const { data: fileData } = await supabase.storage
+				.from('screenshots')
+				.download(fileName)
+
+			if (fileData) {
+				return new Response(fileData, {
+					headers: {
+						'Content-Type': 'image/png',
+						'Cache-Control': CACHE_HEADER
+					}
+				})
+			}
+		}
+
+		// Screenshot is stale or missing — capture in-process using
+		// @miketromba/screenshot-service (avoids self-referential HTTP call)
 		const { GET: screenshotHandler } = await import(
 			'@miketromba/screenshot-service/vercel'
 		)
@@ -91,14 +94,14 @@ export async function GET(
 			}
 		})
 	} catch (error) {
-		console.error('Screenshot capture error:', error)
+		console.error('Screenshot route error:', error)
 		return Response.json(
 			{
-				error: 'Screenshot service unavailable',
+				error: 'Screenshot service error',
 				message:
 					error instanceof Error ? error.message : 'Unknown error'
 			},
-			{ status: 503 }
+			{ status: 500 }
 		)
 	}
 }
