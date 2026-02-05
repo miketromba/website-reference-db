@@ -1,0 +1,26 @@
+{
+	"name": "web",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "bun --hot src/index.ts",
+		"start": "NODE_ENV=production bun src/index.ts",
+		"build": "bun run build.ts",
+		"lint": "biome check .",
+		"test": "echo \"no tests yet\""
+	},
+	"dependencies": {
+		"@supabase/supabase-js": "^2.95.1",
+		"bun-plugin-tailwind": "^0.1.2",
+		"lucide-react": "^0.563.0",
+		"react": "^19",
+		"react-dom": "^19",
+		"tailwindcss": "^4.1.11"
+	},
+	"devDependencies": {
+		"@types/react": "^19",
+		"@types/react-dom": "^19",
+		"@types/bun": "latest"
+	}
+}
