@@ -213,6 +213,7 @@ function ReferenceCard({
 						<span className="text-xs">Preview unavailable</span>
 					</div>
 				) : (
+					// biome-ignore lint/performance/noImgElement: dynamic API screenshot, not a static asset
 					<img
 						src={screenshotUrl(website.id)}
 						alt={`Screenshot of ${displayUrl}`}
