@@ -1,4 +1,3 @@
-import './env'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 let _client: SupabaseClient | undefined
@@ -22,7 +21,7 @@ export function getSupabase(): SupabaseClient {
 	return _client
 }
 
-/** @deprecated Use getSupabase() — kept for backwards compat during migration */
+/** Proxy that lazily resolves the Supabase client on property access. */
 export const supabase = new Proxy({} as SupabaseClient, {
 	get(_target, prop) {
 		return (getSupabase() as Record<string | symbol, unknown>)[prop]

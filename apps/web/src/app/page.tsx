@@ -1,3 +1,5 @@
+'use client'
+
 import {
 	ArrowBigUp,
 	ExternalLink,
@@ -7,8 +9,8 @@ import {
 	Trash2
 } from 'lucide-react'
 import { type FormEvent, useCallback, useEffect, useState } from 'react'
-import { AuthOverlay } from './components/AuthOverlay'
-import { useAuth } from './context/AuthContext'
+import { AuthOverlay } from '../components/AuthOverlay'
+import { AuthProvider, useAuth } from '../context/AuthContext'
 import {
 	addWebsite,
 	deleteWebsite,
@@ -16,8 +18,7 @@ import {
 	screenshotUrl,
 	toggleUpvote,
 	type Website
-} from './lib/api'
-import './index.css'
+} from '../lib/api'
 
 /* ── Header ────────────────────────────────────────────── */
 
@@ -272,7 +273,7 @@ function ReferenceCard({
 
 const SKELETON_KEYS = ['sk-a', 'sk-b', 'sk-c', 'sk-d', 'sk-e', 'sk-f']
 
-export function App() {
+function App() {
 	const { user, session, loading: authLoading } = useAuth()
 	const [websites, setWebsites] = useState<Website[]>([])
 	const [loading, setLoading] = useState(true)
@@ -450,4 +451,12 @@ export function App() {
 	)
 }
 
-export default App
+/* ── Page (wrapped with AuthProvider) ──────────────────── */
+
+export default function Page() {
+	return (
+		<AuthProvider>
+			<App />
+		</AuthProvider>
+	)
+}

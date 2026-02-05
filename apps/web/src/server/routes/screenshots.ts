@@ -35,8 +35,6 @@ export const screenshotsRoutes = new Elysia().get(
 				.download(fileName)
 
 			if (fileData) {
-				set.headers['content-type'] = 'image/png'
-				set.headers['cache-control'] = CACHE_HEADER
 				return new Response(fileData, {
 					headers: {
 						'Content-Type': 'image/png',
@@ -88,8 +86,6 @@ export const screenshotsRoutes = new Elysia().get(
 			.update({ screenshot_captured_at: new Date().toISOString() })
 			.eq('id', websiteId)
 
-		set.headers['content-type'] = 'image/png'
-		set.headers['cache-control'] = CACHE_HEADER
 		return new Response(imageBytes, {
 			headers: {
 				'Content-Type': 'image/png',

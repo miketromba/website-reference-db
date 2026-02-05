@@ -1,5 +1,3 @@
-import { API_URL } from './config'
-
 export interface Website {
 	id: string
 	url: string
@@ -22,7 +20,7 @@ function authHeaders(token?: string): HeadersInit {
 
 export async function getWebsites(userId?: string): Promise<Website[]> {
 	const params = userId ? `?user_id=${encodeURIComponent(userId)}` : ''
-	const res = await fetch(`${API_URL}/websites${params}`)
+	const res = await fetch(`/api/websites${params}`)
 	if (!res.ok) {
 		throw new Error('Failed to fetch websites')
 	}
@@ -34,7 +32,7 @@ export async function addWebsite(
 	token: string,
 	title?: string
 ): Promise<Website> {
-	const res = await fetch(`${API_URL}/websites`, {
+	const res = await fetch('/api/websites', {
 		method: 'POST',
 		headers: authHeaders(token),
 		body: JSON.stringify({ url, title })
@@ -47,7 +45,7 @@ export async function addWebsite(
 }
 
 export async function deleteWebsite(id: string, token: string): Promise<void> {
-	const res = await fetch(`${API_URL}/websites/${id}`, {
+	const res = await fetch(`/api/websites/${id}`, {
 		method: 'DELETE',
 		headers: authHeaders(token)
 	})
@@ -61,7 +59,7 @@ export async function toggleUpvote(
 	id: string,
 	token: string
 ): Promise<{ upvoted: boolean; upvote_count: number }> {
-	const res = await fetch(`${API_URL}/websites/${id}/upvote`, {
+	const res = await fetch(`/api/websites/${id}/upvote`, {
 		method: 'POST',
 		headers: authHeaders(token)
 	})
@@ -73,5 +71,5 @@ export async function toggleUpvote(
 }
 
 export function screenshotUrl(websiteId: string): string {
-	return `${API_URL}/screenshots/${websiteId}`
+	return `/api/screenshots/${websiteId}`
 }

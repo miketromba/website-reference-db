@@ -1,3 +1,5 @@
+'use client'
+
 import { ArrowRight, Loader2, Mail, X } from 'lucide-react'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
