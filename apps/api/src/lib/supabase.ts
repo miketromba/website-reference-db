@@ -1,15 +1,30 @@
 import './env'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.SUPABASE_URL
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+let _client: SupabaseClient | undefined
 
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-	throw new Error(
-		'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables'
-	)
+/** Lazily initialised Supabase client — throws on first use if env vars are missing. */
+export function getSupabase(): SupabaseClient {
+	if (_client) return _client
+
+	const supabaseUrl = process.env.SUPABASE_URL
+	const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+	if (!supabaseUrl || !supabaseServiceRoleKey) {
+		throw new Error(
+			'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables'
+		)
+	}
+
+	_client = createClient(supabaseUrl, supabaseServiceRoleKey, {
+		auth: { autoRefreshToken: false, persistSession: false }
+	})
+	return _client
 }
 
-export const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
-	auth: { autoRefreshToken: false, persistSession: false }
+/** @deprecated Use getSupabase() — kept for backwards compat during migration */
+export const supabase = new Proxy({} as SupabaseClient, {
+	get(_target, prop) {
+		return (getSupabase() as Record<string | symbol, unknown>)[prop]
+	}
 })
