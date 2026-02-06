@@ -6,6 +6,7 @@ export interface Website {
 	screenshot_captured_at: string | null
 	created_at: string
 	upvote_count: number
+	has_upvoted: boolean
 }
 
 function authHeaders(token?: string): HeadersInit {
@@ -18,9 +19,14 @@ function authHeaders(token?: string): HeadersInit {
 	return h
 }
 
-export async function getWebsites(userId?: string): Promise<Website[]> {
+export async function getWebsites(
+	userId?: string,
+	token?: string
+): Promise<Website[]> {
 	const params = userId ? `?user_id=${encodeURIComponent(userId)}` : ''
-	const res = await fetch(`/api/websites${params}`)
+	const res = await fetch(`/api/websites${params}`, {
+		headers: authHeaders(token)
+	})
 	if (!res.ok) {
 		throw new Error('Failed to fetch websites')
 	}

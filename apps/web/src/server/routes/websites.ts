@@ -6,7 +6,9 @@ export const websitesRoutes = new Elysia({ prefix: '/websites' })
 	// GET /websites — public, returns all websites with upvote counts
 	.get(
 		'/',
-		async ({ query }) => {
+		async ({ query, headers }) => {
+			const user = await resolveUser(headers.authorization)
+
 			let q = supabase
 				.from('websites')
 				.select('*, upvotes(count)')
@@ -22,6 +24,20 @@ export const websitesRoutes = new Elysia({ prefix: '/websites' })
 				throw new Error(error.message)
 			}
 
+			// If authed, batch-check which websites the user has upvoted
+			let upvotedSet: Set<string> = new Set()
+			if (user && data && data.length > 0) {
+				const websiteIds = data.map(w => w.id)
+				const { data: userUpvotes } = await supabase
+					.from('upvotes')
+					.select('website_id')
+					.eq('user_id', user.id)
+					.in('website_id', websiteIds)
+				if (userUpvotes) {
+					upvotedSet = new Set(userUpvotes.map(u => u.website_id))
+				}
+			}
+
 			return (data ?? []).map(w => ({
 				id: w.id,
 				url: w.url,
@@ -29,7 +45,8 @@ export const websitesRoutes = new Elysia({ prefix: '/websites' })
 				user_id: w.user_id,
 				screenshot_captured_at: w.screenshot_captured_at,
 				created_at: w.created_at,
-				upvote_count: w.upvotes?.[0]?.count ?? 0
+				upvote_count: w.upvotes?.[0]?.count ?? 0,
+				has_upvoted: upvotedSet.has(w.id)
 			}))
 		},
 		{

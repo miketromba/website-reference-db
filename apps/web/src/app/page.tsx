@@ -1,5 +1,6 @@
 'use client'
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
 	ArrowBigUp,
 	ExternalLink,
@@ -8,7 +9,7 @@ import {
 	Plus,
 	Trash2
 } from 'lucide-react'
-import { type FormEvent, useCallback, useEffect, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 import { AuthOverlay } from '../components/AuthOverlay'
 import { AuthProvider, useAuth } from '../context/AuthContext'
 import {
@@ -19,6 +20,15 @@ import {
 	toggleUpvote,
 	type Website
 } from '../lib/api'
+import { QueryProvider } from '../lib/query'
+
+/* ── Query keys ───────────────────────────────────────── */
+
+const websiteKeys = {
+	all: ['websites'] as const,
+	list: (view: 'all' | 'my', userId?: string) =>
+		['websites', view, userId ?? 'anon'] as const
+}
 
 /* ── Header ────────────────────────────────────────────── */
 
@@ -246,9 +256,16 @@ function ReferenceCard({
 					<button
 						type="button"
 						onClick={onUpvote}
-						className="flex items-center gap-1 px-2 py-1 rounded-lg text-sm text-ink-muted hover:text-vermillion hover:bg-vermillion-light/50 transition-all"
+						className={`flex items-center gap-1 px-2 py-1 rounded-lg text-sm transition-all ${
+							website.has_upvoted
+								? 'text-vermillion bg-vermillion-light/50'
+								: 'text-ink-muted hover:text-vermillion hover:bg-vermillion-light/50'
+						}`}
 					>
-						<ArrowBigUp size={16} />
+						<ArrowBigUp
+							size={16}
+							fill={website.has_upvoted ? 'currentColor' : 'none'}
+						/>
 						<span className="font-medium tabular-nums">
 							{website.upvote_count}
 						</span>
@@ -276,11 +293,10 @@ const SKELETON_KEYS = ['sk-a', 'sk-b', 'sk-c', 'sk-d', 'sk-e', 'sk-f']
 
 function App() {
 	const { user, session, loading: authLoading } = useAuth()
-	const [websites, setWebsites] = useState<Website[]>([])
-	const [loading, setLoading] = useState(true)
+	const queryClient = useQueryClient()
+
 	const [showAuth, setShowAuth] = useState(false)
 	const [view, setView] = useState<'all' | 'my'>('all')
-	const [submitting, setSubmitting] = useState(false)
 	const [submitError, setSubmitError] = useState('')
 
 	// Default view based on auth
@@ -295,97 +311,127 @@ function App() {
 		}
 	}, [user, showAuth])
 
-	const fetchData = useCallback(async () => {
-		setLoading(true)
-		try {
-			const userId = view === 'my' && user ? user.id : undefined
-			const data = await getWebsites(userId)
-			setWebsites(data)
-		} catch {
-			/* fetch error — silently degrade */
-		} finally {
-			setLoading(false)
+	/* ── Queries ─────────────────────────────────────── */
+
+	const queryKey = websiteKeys.list(view, user?.id)
+
+	const { data: websites = [], isLoading } = useQuery({
+		queryKey,
+		queryFn: () =>
+			getWebsites(
+				view === 'my' && user ? user.id : undefined,
+				session?.access_token
+			),
+		enabled: !authLoading
+	})
+
+	/* ── Mutations ───────────────────────────────────── */
+
+	const addMutation = useMutation({
+		mutationFn: (url: string) =>
+			addWebsite(url, session?.access_token ?? ''),
+		onSuccess: () => {
+			setSubmitError('')
+			queryClient.invalidateQueries({ queryKey: websiteKeys.all })
+		},
+		onError: (err: Error) => {
+			setSubmitError(err.message)
 		}
-	}, [view, user])
+	})
 
-	useEffect(() => {
-		if (!authLoading) {
-			fetchData()
-		}
-	}, [fetchData, authLoading])
-
-	const handleAddWebsite = async (url: string) => {
-		if (!user || !session) {
-			setShowAuth(true)
-			return
-		}
-
-		setSubmitting(true)
-		setSubmitError('')
-
-		try {
-			const newSite = await addWebsite(url, session.access_token)
-			setWebsites(prev => [newSite, ...prev])
-		} catch (err) {
-			setSubmitError(
-				err instanceof Error ? err.message : 'Failed to add website'
+	const deleteMutation = useMutation({
+		mutationFn: (id: string) =>
+			deleteWebsite(id, session?.access_token ?? ''),
+		onMutate: async id => {
+			await queryClient.cancelQueries({ queryKey })
+			const previous = queryClient.getQueryData<Website[]>(queryKey)
+			queryClient.setQueryData<Website[]>(queryKey, old =>
+				old ? old.filter(w => w.id !== id) : []
 			)
-		} finally {
-			setSubmitting(false)
-		}
-	}
-
-	const handleUpvote = async (id: string) => {
-		if (!user || !session) {
-			setShowAuth(true)
-			return
-		}
-
-		// Optimistic update
-		setWebsites(prev =>
-			prev.map(w =>
-				w.id === id ? { ...w, upvote_count: w.upvote_count + 1 } : w
-			)
-		)
-
-		try {
-			const result = await toggleUpvote(id, session.access_token)
-			setWebsites(prev =>
-				prev.map(w =>
-					w.id === id
-						? { ...w, upvote_count: result.upvote_count }
-						: w
-				)
-			)
-		} catch {
-			// Revert on failure
-			setWebsites(prev =>
-				prev.map(w =>
-					w.id === id
-						? {
-								...w,
-								upvote_count: Math.max(0, w.upvote_count - 1)
-							}
-						: w
-				)
-			)
-		}
-	}
-
-	const handleDelete = async (id: string) => {
-		if (!session) return
-
-		const removed = websites.find(w => w.id === id)
-		setWebsites(prev => prev.filter(w => w.id !== id))
-
-		try {
-			await deleteWebsite(id, session.access_token)
-		} catch {
-			if (removed) {
-				setWebsites(prev => [removed, ...prev])
+			return { previous }
+		},
+		onError: (_err, _id, context) => {
+			if (context?.previous) {
+				queryClient.setQueryData(queryKey, context.previous)
 			}
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: websiteKeys.all })
 		}
+	})
+
+	const upvoteMutation = useMutation({
+		mutationFn: (id: string) =>
+			toggleUpvote(id, session?.access_token ?? ''),
+		onMutate: async id => {
+			// Cancel any outgoing refetches so they don't overwrite our optimistic update
+			await queryClient.cancelQueries({ queryKey: websiteKeys.all })
+
+			// Snapshot all cached website lists so we can roll back
+			const snapshots: [readonly string[], Website[] | undefined][] = []
+			for (const query of queryClient.getQueriesData<Website[]>({
+				queryKey: websiteKeys.all
+			})) {
+				snapshots.push([query[0] as unknown as string[], query[1]])
+			}
+
+			// Optimistically update every cached list that contains this website
+			queryClient.setQueriesData<Website[]>(
+				{ queryKey: websiteKeys.all },
+				old =>
+					old?.map(w =>
+						w.id === id
+							? {
+									...w,
+									has_upvoted: !w.has_upvoted,
+									upvote_count: w.has_upvoted
+										? Math.max(0, w.upvote_count - 1)
+										: w.upvote_count + 1
+								}
+							: w
+					)
+			)
+
+			return { snapshots }
+		},
+		onError: (_err, _id, context) => {
+			// Roll back all cached lists to their previous state
+			if (context?.snapshots) {
+				for (const [key, data] of context.snapshots) {
+					queryClient.setQueryData(key, data)
+				}
+			}
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: websiteKeys.all })
+		}
+	})
+
+	/* ── Handlers ────────────────────────────────────── */
+
+	const handleAddWebsite = (url: string) => {
+		if (!user || !session) {
+			setShowAuth(true)
+			return
+		}
+		setSubmitError('')
+		addMutation.mutate(url)
 	}
+
+	const handleUpvote = (id: string) => {
+		if (!user || !session) {
+			setShowAuth(true)
+			return
+		}
+		upvoteMutation.mutate(id)
+	}
+
+	const handleDelete = (id: string) => {
+		if (!session) return
+		deleteMutation.mutate(id)
+	}
+
+	const loading = isLoading || authLoading
 
 	return (
 		<div className="min-h-screen bg-paper">
@@ -394,7 +440,7 @@ function App() {
 
 				<UrlInput
 					onSubmit={handleAddWebsite}
-					submitting={submitting}
+					submitting={addMutation.isPending}
 					error={submitError}
 				/>
 
@@ -452,12 +498,14 @@ function App() {
 	)
 }
 
-/* ── Page (wrapped with AuthProvider) ──────────────────── */
+/* ── Page (wrapped with AuthProvider + QueryProvider) ── */
 
 export default function Page() {
 	return (
-		<AuthProvider>
-			<App />
-		</AuthProvider>
+		<QueryProvider>
+			<AuthProvider>
+				<App />
+			</AuthProvider>
+		</QueryProvider>
 	)
 }
