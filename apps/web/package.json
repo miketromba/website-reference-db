@@ -7,7 +7,7 @@
 		"build": "next build",
 		"start": "next start",
 		"lint": "biome check .",
-		"test": "echo \"no tests yet\""
+		"test": "bun test"
 	},
 	"dependencies": {
 		"@elysiajs/cors": "^1.4.1",

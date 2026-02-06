@@ -1,4 +1,5 @@
 import { Elysia, t } from 'elysia'
+import { normalizeUrl } from '../lib/normalize-url'
 import { supabase } from '../lib/supabase'
 import { resolveUser } from '../middleware/auth'
 
@@ -65,12 +66,10 @@ export const websitesRoutes = new Elysia({ prefix: '/websites' })
 				return { error: 'Unauthorized' }
 			}
 
-			// Validate URL
+			// Validate & normalize URL to canonical form for deduplication
+			let canonicalUrl: string
 			try {
-				const parsed = new URL(body.url)
-				if (!['http:', 'https:'].includes(parsed.protocol)) {
-					throw new Error('Invalid protocol')
-				}
+				canonicalUrl = normalizeUrl(body.url)
 			} catch {
 				set.status = 400
 				return { error: 'Invalid URL' }
@@ -79,7 +78,7 @@ export const websitesRoutes = new Elysia({ prefix: '/websites' })
 			const { data, error: dbError } = await supabase
 				.from('websites')
 				.insert({
-					url: body.url,
+					url: canonicalUrl,
 					title: body.title ?? null,
 					user_id: user.id
 				})
