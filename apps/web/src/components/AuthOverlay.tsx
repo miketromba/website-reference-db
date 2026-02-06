@@ -58,7 +58,7 @@ export function AuthOverlay({ isOpen, onClose }: AuthOverlayProps) {
 			{/* Backdrop */}
 			<button
 				type="button"
-				className="absolute inset-0 w-full h-full bg-paper/80 backdrop-blur-sm cursor-default appearance-none border-none p-0"
+				className="absolute inset-0 w-full h-full bg-paper/85 backdrop-blur-md cursor-default appearance-none border-none p-0"
 				onClick={onClose}
 				aria-label="Close dialog"
 			/>
@@ -68,7 +68,7 @@ export function AuthOverlay({ isOpen, onClose }: AuthOverlayProps) {
 				<button
 					type="button"
 					onClick={onClose}
-					className="absolute top-4 right-4 p-2 text-ink-muted hover:text-ink transition-colors rounded-lg hover:bg-paper"
+					className="absolute top-4 right-4 p-2 text-ink-muted hover:text-ink transition-colors rounded-lg hover:bg-paper-dark"
 				>
 					<X size={20} />
 				</button>
@@ -107,7 +107,7 @@ export function AuthOverlay({ isOpen, onClose }: AuthOverlayProps) {
 								onChange={e => setEmail(e.target.value)}
 								placeholder="you@example.com"
 								required
-								className="w-full px-4 py-3 bg-paper border border-border rounded-xl text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-vermillion/30 focus:border-vermillion transition-all font-body text-sm"
+								className="w-full px-4 py-3 bg-paper-dark border border-border rounded-xl text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-vermillion/30 focus:border-vermillion transition-all font-body text-sm"
 								disabled={status === 'loading'}
 							/>
 

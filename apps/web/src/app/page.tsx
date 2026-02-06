@@ -231,24 +231,24 @@ function ReferenceCard({
 			</a>
 
 			{/* Details */}
-			<div className="p-4">
+			<div className="px-4 py-3 flex items-center justify-between gap-2">
 				<a
 					href={website.url}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="text-sm text-ink hover:text-vermillion transition-colors truncate block font-medium"
+					className="text-sm text-ink hover:text-vermillion transition-colors truncate font-medium min-w-0"
 					title={website.url}
 				>
 					{displayUrl}
 				</a>
 
-				<div className="flex items-center justify-between mt-3">
+				<div className="flex items-center gap-1 shrink-0">
 					<button
 						type="button"
 						onClick={onUpvote}
-						className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-ink-muted hover:text-vermillion hover:bg-vermillion-light/50 transition-all"
+						className="flex items-center gap-1 px-2 py-1 rounded-lg text-sm text-ink-muted hover:text-vermillion hover:bg-vermillion-light/50 transition-all"
 					>
-						<ArrowBigUp size={18} />
+						<ArrowBigUp size={16} />
 						<span className="font-medium tabular-nums">
 							{website.upvote_count}
 						</span>
@@ -258,7 +258,7 @@ function ReferenceCard({
 						<button
 							type="button"
 							onClick={onDelete}
-							className="p-2 rounded-lg text-ink-faint hover:text-vermillion hover:bg-vermillion-light/30 transition-all opacity-0 group-hover:opacity-100"
+							className="p-1.5 rounded-lg text-ink-faint hover:text-vermillion hover:bg-vermillion-light/30 transition-all opacity-0 group-hover:opacity-100"
 							title="Delete reference"
 						>
 							<Trash2 size={14} />
