@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
-@theme {
+/*
+ * Plain :root block — these custom properties are ALWAYS defined,
+ * even if @tailwindcss/postcss fails to process @theme on Vercel.
+ */
+:root {
 	--color-paper: #0c0c0c;
 	--color-paper-dark: #161616;
 	--color-ink: #e4e4e4;
@@ -16,6 +20,30 @@
 
 	--font-display: "Fraunces", Georgia, serif;
 	--font-body: "Outfit", system-ui, sans-serif;
+}
+
+/*
+ * @theme tells Tailwind to generate utility classes (bg-paper, text-ink, etc.)
+ * using `inline` references so it reads from the :root vars above rather than
+ * re-defining them.  If @tailwindcss/postcss doesn't run, we lose utilities
+ * but the :root vars still work for everything in @layer base.
+ */
+@theme inline {
+	--color-paper: var(--color-paper);
+	--color-paper-dark: var(--color-paper-dark);
+	--color-ink: var(--color-ink);
+	--color-ink-muted: var(--color-ink-muted);
+	--color-ink-faint: var(--color-ink-faint);
+	--color-vermillion: var(--color-vermillion);
+	--color-vermillion-dark: var(--color-vermillion-dark);
+	--color-vermillion-light: var(--color-vermillion-light);
+	--color-card: var(--color-card);
+	--color-card-hover: var(--color-card-hover);
+	--color-border: var(--color-border);
+	--color-border-strong: var(--color-border-strong);
+
+	--font-display: var(--font-display);
+	--font-body: var(--font-body);
 }
 
 @layer base {
