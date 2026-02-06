@@ -6,7 +6,9 @@ import {
 	ExternalLink,
 	ImageOff,
 	Loader2,
+	Moon,
 	Plus,
+	Sun,
 	Trash2
 } from 'lucide-react'
 import { type FormEvent, useEffect, useState } from 'react'
@@ -163,6 +165,45 @@ function ViewToggle({
 	)
 }
 
+/* ── Screenshot Mode Toggle ────────────────────────────── */
+
+function ScreenshotModeToggle({
+	mode,
+	onToggle
+}: {
+	mode: 'light' | 'dark'
+	onToggle: (m: 'light' | 'dark') => void
+}) {
+	return (
+		<div className="flex items-center gap-1 bg-paper-dark rounded-lg p-1">
+			<button
+				type="button"
+				onClick={() => onToggle('light')}
+				className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+					mode === 'light'
+						? 'bg-card text-ink shadow-sm'
+						: 'text-ink-muted hover:text-ink'
+				}`}
+			>
+				<Sun size={14} />
+				Light
+			</button>
+			<button
+				type="button"
+				onClick={() => onToggle('dark')}
+				className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+					mode === 'dark'
+						? 'bg-card text-ink shadow-sm'
+						: 'text-ink-muted hover:text-ink'
+				}`}
+			>
+				<Moon size={14} />
+				Dark
+			</button>
+		</div>
+	)
+}
+
 /* ── Skeleton Card ─────────────────────────────────────── */
 
 function SkeletonCard() {
@@ -185,16 +226,24 @@ function ReferenceCard({
 	website,
 	isOwner,
 	showDelete,
+	screenshotMode,
 	onUpvote,
 	onDelete
 }: {
 	website: Website
 	isOwner: boolean
 	showDelete: boolean
+	screenshotMode: 'light' | 'dark'
 	onUpvote: () => void
 	onDelete: () => void
 }) {
 	const [imgError, setImgError] = useState(false)
+
+	// Reset error state when screenshot mode changes so images reload
+	// biome-ignore lint/correctness/useExhaustiveDependencies: screenshotMode change must reset error state to allow image reload
+	useEffect(() => {
+		setImgError(false)
+	}, [screenshotMode])
 
 	const displayUrl = (() => {
 		try {
@@ -225,8 +274,8 @@ function ReferenceCard({
 				) : (
 					// biome-ignore lint/performance/noImgElement: dynamic API screenshot, not a static asset
 					<img
-						src={screenshotUrl(website.id)}
-						alt={`Screenshot of ${displayUrl}`}
+						src={screenshotUrl(website.id, screenshotMode)}
+						alt={`${screenshotMode === 'dark' ? 'Dark' : 'Light'} mode screenshot of ${displayUrl}`}
 						className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"
 						onError={() => setImgError(true)}
 						loading="lazy"
@@ -298,6 +347,23 @@ function App() {
 	const [showAuth, setShowAuth] = useState(false)
 	const [view, setView] = useState<'all' | 'my'>('all')
 	const [submitError, setSubmitError] = useState('')
+	const [screenshotMode, setScreenshotMode] = useState<'light' | 'dark'>(
+		() => {
+			if (typeof window !== 'undefined') {
+				return (
+					(localStorage.getItem('screenshotMode') as
+						| 'light'
+						| 'dark') ?? 'light'
+				)
+			}
+			return 'light'
+		}
+	)
+
+	// Persist screenshot mode preference
+	useEffect(() => {
+		localStorage.setItem('screenshotMode', screenshotMode)
+	}, [screenshotMode])
 
 	// Default view based on auth
 	useEffect(() => {
@@ -444,9 +510,15 @@ function App() {
 					error={submitError}
 				/>
 
-				{/* View toggle + count */}
+				{/* View toggle + screenshot mode + count */}
 				<div className="px-6 md:px-10 mb-6 flex items-center justify-between flex-wrap gap-3">
-					{user && <ViewToggle view={view} onToggle={setView} />}
+					<div className="flex items-center gap-3 flex-wrap">
+						{user && <ViewToggle view={view} onToggle={setView} />}
+						<ScreenshotModeToggle
+							mode={screenshotMode}
+							onToggle={setScreenshotMode}
+						/>
+					</div>
 					{!loading && (
 						<span className="text-sm text-ink-muted ml-auto tabular-nums">
 							{websites.length}{' '}
@@ -484,6 +556,7 @@ function App() {
 									website={site}
 									isOwner={user?.id === site.user_id}
 									showDelete={view === 'my'}
+									screenshotMode={screenshotMode}
 									onUpvote={() => handleUpvote(site.id)}
 									onDelete={() => handleDelete(site.id)}
 								/>

@@ -76,6 +76,9 @@ export async function toggleUpvote(
 	return data
 }
 
-export function screenshotUrl(websiteId: string): string {
-	return `/api/screenshots/${websiteId}`
+export function screenshotUrl(
+	websiteId: string,
+	mode: 'light' | 'dark' = 'light'
+): string {
+	return `/api/screenshots/${websiteId}?mode=${mode}`
 }

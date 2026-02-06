@@ -16,7 +16,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@elysiajs/cors": "^1.4.1",
-        "@miketromba/screenshot-service": "^0.2.6",
+        "@miketromba/screenshot-service": "^0.3.0",
         "@sparticuz/chromium": "^143.0.4",
         "@supabase/supabase-js": "^2.95.2",
         "@tanstack/react-query": "^5.90.20",
@@ -132,7 +132,7 @@
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
 
-    "@miketromba/screenshot-service": ["@miketromba/screenshot-service@0.2.6", "", { "dependencies": { "@hono/zod-validator": "^0.4.3", "@sparticuz/chromium": "^143.0.4", "hono": "^4.7.4", "puppeteer-core": "^24.36.0", "zod": "^3.24.2" }, "optionalDependencies": { "puppeteer": "^24.6.0", "puppeteer-cluster": "^0.24.0" }, "bin": { "screenshot-service": "bin/cli.ts" } }, "sha512-io8xcn+cneuiKFEWGkf+SkUYshla2iqgRHzl6YUe5iJPo8aiixvFeaehd0djDlZP1KdxGOOvtnxh9aC8rbZ3GA=="],
+    "@miketromba/screenshot-service": ["@miketromba/screenshot-service@0.3.0", "", { "dependencies": { "@hono/zod-validator": "^0.4.3", "@sparticuz/chromium": "^143.0.4", "hono": "^4.7.4", "puppeteer-core": "^24.36.0", "zod": "^3.24.2" }, "optionalDependencies": { "puppeteer": "^24.6.0", "puppeteer-cluster": "^0.24.0" }, "bin": { "screenshot-service": "bin/cli.ts" } }, "sha512-wLq7Rhk3OudsmXX8zcuIbYk4rb+UnUbpE53OlHqk3rOFBm8jDaxQhp9uL2UB7E/zeE2zgluBZOPh5Xo9Uo1XwA=="],
 
     "@next/env": ["@next/env@16.1.6", "", {}, "sha512-N1ySLuZjnAtN3kFnwhAwPvZah8RJxKasD7x1f8shFqhncnWZn4JMfg37diLNuoHsLAlrDfM3g4mawVdtAG8XLQ=="],
 
