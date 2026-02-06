@@ -17,6 +17,7 @@
       "dependencies": {
         "@elysiajs/cors": "^1.4.1",
         "@miketromba/screenshot-service": "^0.2.6",
+        "@sparticuz/chromium": "^143.0.4",
         "@supabase/supabase-js": "^2.95.2",
         "elysia": "^1.4.22",
         "lucide-react": "^0.563.0",
